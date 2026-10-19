@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:16
+    container_name: creditflow_db
+    environment:
+      POSTGRES_DB: creditflow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - creditflow_data:/var/lib/postgresql/data
+
+  db_test:
+    image: postgres:16
+    container_name: creditflow_db_test
+    environment:
+      POSTGRES_DB: creditflow_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5433:5432"
+
+volumes:
+  creditflow_data:
