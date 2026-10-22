@@ -2,27 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\IndexTransactionsRequest;
+use App\Http\Requests\ReverseTransactionRequest;
 use App\Http\Requests\StoreTransactionRequest;
 use App\Models\Account;
 use App\Models\Transaction;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class TransactionController extends Controller
 {
     /**
      * Extrato paginado da conta autenticada, com filtros de tipo e data.
      */
-    public function index(Request $request): JsonResponse
+    public function index(IndexTransactionsRequest $request): JsonResponse
     {
-        $filters = $request->validate([
-            'type' => ['nullable', Rule::in(['credit', 'debit', 'reversal'])],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
-            'per_page' => ['nullable', 'integer', 'between:1,100'],
-        ]);
+        $filters = $request->validated();
 
         $transactions = $request->user()->account->transactions()
             ->when($filters['type'] ?? null, fn ($q, $type) => $q->where('type', $type))
@@ -47,7 +42,7 @@ class TransactionController extends Controller
     /**
      * Cria um estorno vinculado à movimentação original.
      */
-    public function reverse(Request $request, int $id): JsonResponse
+    public function reverse(ReverseTransactionRequest $request, int $id): JsonResponse
     {
         $accountId = $request->user()->account->id;
 

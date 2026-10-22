@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ReverseTransactionRequest extends FormRequest
 {
@@ -16,6 +17,14 @@ class ReverseTransactionRequest extends FormRequest
     }
 
     /**
+     * Copia o id da URL para os dados, para que possa ser validado.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge(['id' => $this->route('id')]);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
@@ -23,7 +32,13 @@ class ReverseTransactionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            // Precisa existir e pertencer à conta do usuário autenticado
+            'id' => [
+                'required',
+                'integer',
+                Rule::exists('transactions', 'id')
+                    ->where('account_id', $this->user()->account->id),
+            ],
         ];
     }
 }

@@ -20,5 +20,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::post('/transactions/credit', [TransactionController::class, 'credit']);
     Route::post('/transactions/debit', [TransactionController::class, 'debit']);
-    Route::post('/transactions/{id}/reverse', [TransactionController::class, 'reverse']);
+    Route::post('/transactions/{id}/reverse', [TransactionController::class, 'reverse'])->whereNumber('id');
 });
