@@ -6,13 +6,15 @@ use App\Http\Requests\IndexTransactionsRequest;
 use App\Http\Requests\ReverseTransactionRequest;
 use App\Http\Requests\StoreTransactionRequest;
 use App\Http\Resources\TransactionResource;
-use App\Models\Account;
-use App\Models\Transaction;
+use App\Services\TransactionService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
+    public function __construct(
+        protected TransactionService $transactionService
+    ) {}
+
     /**
      * Extrato paginado da conta autenticada, com filtros de tipo e data.
      */
@@ -30,14 +32,42 @@ class TransactionController extends Controller
         return TransactionResource::collection($transactions)->response();
     }
 
+    /**
+     * Registra crédito na conta autenticada.
+     */
     public function credit(StoreTransactionRequest $request): JsonResponse
     {
-        return $this->record($request, 'credit');
+        $data = $request->validated();
+
+        $result = $this->transactionService->record(
+            account: $request->user()->account,
+            type: 'credit',
+            amount: (int) $data['amount_cents'],
+            idempotencyKey: $data['idempotency_key']
+        );
+
+        return TransactionResource::make($result['transaction'])
+            ->response()
+            ->setStatusCode($result['created'] ? 201 : 200);
     }
 
+    /**
+     * Registra débito na conta autenticada.
+     */
     public function debit(StoreTransactionRequest $request): JsonResponse
     {
-        return $this->record($request, 'debit');
+        $data = $request->validated();
+
+        $result = $this->transactionService->record(
+            account: $request->user()->account,
+            type: 'debit',
+            amount: (int) $data['amount_cents'],
+            idempotencyKey: $data['idempotency_key']
+        );
+
+        return TransactionResource::make($result['transaction'])
+            ->response()
+            ->setStatusCode($result['created'] ? 201 : 200);
     }
 
     /**
@@ -45,87 +75,13 @@ class TransactionController extends Controller
      */
     public function reverse(ReverseTransactionRequest $request, int $id): JsonResponse
     {
-        $accountId = $request->user()->account->id;
+        $transaction = $this->transactionService->reverse(
+            account: $request->user()->account,
+            transactionId: $id
+        );
 
-        $transaction = DB::transaction(function () use ($accountId, $id) {
-            // Trava a conta para impedir operações simultâneas sobre o mesmo saldo
-            $account = Account::whereKey($accountId)->lockForUpdate()->firstOrFail();
-
-            // Buscar pela conta garante que só movimentações do próprio usuário sejam encontradas (404)
-            $original = $account->transactions()->findOrFail($id);
-
-            abort_if($original->type === 'reversal', 422, 'Um estorno não pode ser estornado.');
-            abort_if($original->reversal()->exists(), 409, 'Movimentação já estornada.');
-
-            $newBalance = $original->type === 'credit'
-                ? $account->balance_cents - $original->amount_cents
-                : $account->balance_cents + $original->amount_cents;
-
-            abort_if($newBalance < 0, 422, 'Saldo insuficiente para estornar.');
-
-            $account->balance_cents = $newBalance;
-            $account->save();
-
-            return Transaction::create([
-                'account_id' => $account->id,
-                'type' => 'reversal',
-                'amount_cents' => $original->amount_cents,
-                'balance_after_cents' => $newBalance,
-                'reverses_transaction_id' => $original->id,
-            ]);
-        });
-
-        return TransactionResource::make($transaction)->response()->setStatusCode(201);
-    }
-
-    /**
-     * Registra crédito ou débito, de forma idempotente e sem permitir saldo negativo.
-     */
-    private function record(StoreTransactionRequest $request, string $type): JsonResponse
-    {
-        $data = $request->validated();
-        $key = $data['idempotency_key'];
-        $amount = (int) $data['amount_cents'];
-
-        $accountId = $request->user()->account->id;
-
-        [$transaction, $created] = DB::transaction(function () use ($accountId, $type, $amount, $key) {
-            // Trava a conta: requisições concorrentes esperam esta terminar
-            $account = Account::whereKey($accountId)->lockForUpdate()->firstOrFail();
-
-            // Idempotência: chave já usada devolve o resultado original
-            $existing = $account->transactions()->where('idempotency_key', $key)->first();
-            if ($existing) {
-                abort_if(
-                    $existing->type !== $type || $existing->amount_cents !== $amount,
-                    409,
-                    'Idempotency-Key já usada com outros dados.'
-                );
-
-                return [$existing, false];
-            }
-
-            $newBalance = $type === 'credit'
-                ? $account->balance_cents + $amount
-                : $account->balance_cents - $amount;
-
-            abort_if($newBalance < 0, 422, 'Saldo insuficiente.');
-
-            // Atribuição direta: balance_cents não é fillable de propósito
-            $account->balance_cents = $newBalance;
-            $account->save();
-
-            $transaction = Transaction::create([
-                'account_id' => $account->id,
-                'type' => $type,
-                'amount_cents' => $amount,
-                'balance_after_cents' => $newBalance,
-                'idempotency_key' => $key,
-            ]);
-
-            return [$transaction, true];
-        });
-
-        return TransactionResource::make($transaction)->response()->setStatusCode($created ? 201 : 200);
+        return TransactionResource::make($transaction)
+            ->response()
+            ->setStatusCode(201);
     }
 }
