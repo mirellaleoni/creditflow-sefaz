@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreTransactionRequest;
 use App\Models\Account;
 use App\Models\Transaction;
 use Illuminate\Http\JsonResponse;
@@ -33,12 +34,12 @@ class TransactionController extends Controller
         return response()->json($transactions);
     }
 
-    public function credit(Request $request): JsonResponse
+    public function credit(StoreTransactionRequest $request): JsonResponse
     {
         return $this->record($request, 'credit');
     }
 
-    public function debit(Request $request): JsonResponse
+    public function debit(StoreTransactionRequest $request): JsonResponse
     {
         return $this->record($request, 'debit');
     }
@@ -84,21 +85,13 @@ class TransactionController extends Controller
     /**
      * Registra crédito ou débito, de forma idempotente e sem permitir saldo negativo.
      */
-    private function record(Request $request, string $type): JsonResponse
+    private function record(StoreTransactionRequest $request, string $type): JsonResponse
     {
-        $data = $request->validate([
-            'amount_cents' => ['required', 'integer', 'min:1'],
-        ]);
-
-        $key = $request->header('Idempotency-Key');
-        abort_if(
-            blank($key) || strlen($key) > 100,
-            422,
-            'O cabeçalho Idempotency-Key é obrigatório (máx. 100 caracteres).'
-        );
+        $data = $request->validated();
+        $key = $data['idempotency_key'];
+        $amount = (int) $data['amount_cents'];
 
         $accountId = $request->user()->account->id;
-        $amount = $data['amount_cents'];
 
         [$transaction, $created] = DB::transaction(function () use ($accountId, $type, $amount, $key) {
             // Trava a conta: requisições concorrentes esperam esta terminar
