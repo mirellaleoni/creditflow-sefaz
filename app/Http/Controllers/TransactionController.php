@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\IndexTransactionsRequest;
 use App\Http\Requests\ReverseTransactionRequest;
 use App\Http\Requests\StoreTransactionRequest;
+use App\Http\Resources\TransactionResource;
 use App\Models\Account;
 use App\Models\Transaction;
 use Illuminate\Http\JsonResponse;
@@ -26,7 +27,7 @@ class TransactionController extends Controller
             ->latest('id')
             ->paginate($filters['per_page'] ?? 15);
 
-        return response()->json($transactions);
+        return TransactionResource::collection($transactions)->response();
     }
 
     public function credit(StoreTransactionRequest $request): JsonResponse
@@ -74,7 +75,7 @@ class TransactionController extends Controller
             ]);
         });
 
-        return response()->json($transaction, 201);
+        return TransactionResource::make($transaction)->response()->setStatusCode(201);
     }
 
     /**
@@ -125,6 +126,6 @@ class TransactionController extends Controller
             return [$transaction, true];
         });
 
-        return response()->json($transaction, $created ? 201 : 200);
+        return TransactionResource::make($transaction)->response()->setStatusCode($created ? 201 : 200);
     }
 }

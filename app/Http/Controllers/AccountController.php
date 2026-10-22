@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\JsonResponse;
+use App\Http\Resources\AccountResource;
 use Illuminate\Http\Request;
 
 class AccountController extends Controller
@@ -10,13 +10,8 @@ class AccountController extends Controller
     /**
      * Consulta o saldo da conta do usuário autenticado.
      */
-    public function show(Request $request): JsonResponse
+    public function show(Request $request): AccountResource
     {
-        $account = $request->user()->account;
-
-        return response()->json([
-            'id' => $account->id,
-            'balance_cents' => $account->balance_cents,
-        ]);
+        return new AccountResource($request->user()->account);
     }
 }
