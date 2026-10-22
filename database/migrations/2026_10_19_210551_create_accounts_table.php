@@ -16,7 +16,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::statement('ALTER TABLE accounts ADD CONSTRAINT accounts_balance_non_negative CHECK (balance_cents >= 0)');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE accounts ADD CONSTRAINT accounts_balance_non_negative CHECK (balance_cents >= 0)');
+        }
     }
 
     public function down(): void
