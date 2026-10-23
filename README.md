@@ -41,13 +41,7 @@ cp .env.example .env        # Windows PowerShell: Copy-Item .env.example .env
 php artisan key:generate
 ```
 
-2. Suba o PostgreSQL (o [docker-compose.yml](docker-compose.yml) cria os bancos `creditflow` na porta 5432 e `creditflow_test` na 5433):
-
-```bash
-docker compose up -d
-```
-
-3. Edite o `.env` e preencha `DB_PASSWORD` com o mesmo valor de `POSTGRES_PASSWORD` definido no `docker-compose.yml`. O `.env.example` não contém segredos e o `.env` não deve ser versionado.
+2. Edite o `.env` e escolha uma senha em `DB_PASSWORD`. O mesmo valor é usado pelo [docker-compose.yml](docker-compose.yml) para criar o PostgreSQL (o Compose lê o `.env` automaticamente e não sobe sem essa variável). O `.env.example` não contém segredos e o `.env` não deve ser versionado.
 
 ```dotenv
 DB_CONNECTION=pgsql
@@ -55,8 +49,16 @@ DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_DATABASE=creditflow
 DB_USERNAME=postgres
-DB_PASSWORD=<mesma senha do docker-compose>
+DB_PASSWORD=<senha de sua escolha>
 ```
+
+3. Suba o PostgreSQL (cria os bancos `creditflow` na porta 5432 e `creditflow_test` na 5433):
+
+```bash
+docker compose up -d
+```
+
+> **Atenção:** o PostgreSQL só lê a senha na primeira criação do volume. Se trocar `DB_PASSWORD` depois, rode `docker compose down -v` (apaga os dados locais) antes de subir novamente.
 
 ## Migrations e seed
 
@@ -66,6 +68,8 @@ php artisan db:seed      # opcional: dados de demonstração
 ```
 
 O seed cria o usuário demo `demo@creditflow.local` (senha definida em [DatabaseSeeder.php](database/seeders/DatabaseSeeder.php)) com saldo e histórico de exemplo.
+
+> **Somente para demonstração:** as credenciais demo são públicas (o front-end tem um botão que as preenche) e só existem após `db:seed`. Não execute o seed em produção.
 
 ## Executando
 
