@@ -86,6 +86,18 @@ Os testes usam SQLite em memória (ver [phpunit.xml](phpunit.xml)), portanto nã
 
 > **Nota:** o bloqueio `FOR UPDATE` é ignorado pelo SQLite; a proteção de concorrência só é efetiva no PostgreSQL.
 
+### Teste de concorrência (PostgreSQL)
+
+[ConcurrencyTest](tests/Feature/ConcurrencyTest.php) dispara 5 processos PHP reais contra a mesma conta (via [debit_worker.php](tests/Support/debit_worker.php)). Ele é **ignorado** no SQLite e roda contra o banco `creditflow_test` do Docker (porta 5433):
+
+```powershell
+$env:DB_CONNECTION="pgsql"; $env:DB_HOST="127.0.0.1"; $env:DB_PORT="5433"
+$env:DB_DATABASE="creditflow_test"; $env:DB_USERNAME="postgres"; $env:DB_PASSWORD="<senha do docker-compose>"
+php artisan test --filter=ConcurrencyTest
+```
+
+Verifica que, com saldo de R$ 100,00 e 5 débitos simultâneos de R$ 80,00, apenas um é aceito (os outros recebem `422`) e que 5 requisições simultâneas com a mesma `Idempotency-Key` geram um único lançamento.
+
 ## Autenticação
 
 A API usa **Bearer tokens** (Laravel Sanctum). Registre-se ou faça login, receba o `token` e envie-o em todas as rotas protegidas:
@@ -271,6 +283,21 @@ Erros de validação seguem o formato `{"message": "...", "errors": {"campo": ["
 - Toda operação roda dentro de `DB::transaction` e trava a linha da conta com `SELECT ... FOR UPDATE` (`lockForUpdate`).
 - Requisições simultâneas na mesma conta são serializadas: duas retiradas concorrentes não gastam o mesmo saldo, e a checagem de idempotência ocorre dentro do lock.
 - Cadastro é atômico: usuário e conta são criados juntos ou nenhum dos dois.
+
+## Uso de ferramentas de IA
+
+- **Antigravity (assistente de código com modelos Gemini e Claude):** apoio na escrita de testes, documentação (README e DECISOES.md), ajustes de interface e revisão das regras de negócio.
+
+Todo código gerado foi lido, executado e validado antes de entrar no repositório.
+
+### Exemplo de código validado
+
+O [ConcurrencyTest](tests/Feature/ConcurrencyTest.php) foi sugerido pela IA para provar a regra R6. Um teste que passa não prova nada por si só, então ele foi validado removendo temporariamente `->lockForUpdate()` do [TransactionService](app/Services/TransactionService.php):
+
+- **Com o bloqueio:** os 2 testes passam (1 débito aceito, 4 rejeitados com `422`).
+- **Sem o bloqueio:** os 2 testes **falham**. Os 5 débitos de R$ 80,00 foram aceitos (`201`) sobre um saldo de R$ 100,00, e a requisição concorrente com mesma chave chegou a violar a constraint única do banco.
+
+Isso confirma que o teste detecta a condição de corrida e que o `lockForUpdate` é o que a evita. O código foi restaurado ao original em seguida.
 
 ## Estrutura
 
