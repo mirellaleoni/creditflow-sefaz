@@ -17,10 +17,9 @@ class AuthController extends Controller
     {
         $data = $request->validated();
 
-        // Tudo ou nada: se criar a conta falhar, o usuário também não é criado
         $user = DB::transaction(function () use ($data) {
             $user = User::create($data);
-            $user->account()->create();   // conta inicial, saldo 0
+            $user->account()->create();
             return $user;
         });
 

@@ -7,16 +7,8 @@ use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
-/**
- * @extends Factory<Transaction>
- */
 class TransactionFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
@@ -29,9 +21,6 @@ class TransactionFactory extends Factory
         ];
     }
 
-    /**
-     * Define a movimentação como crédito.
-     */
     public function credit(int $amountCents = 5000): static
     {
         return $this->state(fn (array $attributes) => [
@@ -40,9 +29,6 @@ class TransactionFactory extends Factory
         ]);
     }
 
-    /**
-     * Define a movimentação como débito.
-     */
     public function debit(int $amountCents = 2000): static
     {
         return $this->state(fn (array $attributes) => [
@@ -51,9 +37,6 @@ class TransactionFactory extends Factory
         ]);
     }
 
-    /**
-     * Define a movimentação como estorno vinculado a outra transação.
-     */
     public function reversal(Transaction $original): static
     {
         return $this->state(fn () => [

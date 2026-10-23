@@ -15,9 +15,6 @@ class TransactionController extends Controller
         protected TransactionService $transactionService
     ) {}
 
-    /**
-     * Extrato paginado da conta autenticada, com filtros de tipo e data.
-     */
     public function index(IndexTransactionsRequest $request): JsonResponse
     {
         $filters = $request->validated();
@@ -32,9 +29,6 @@ class TransactionController extends Controller
         return TransactionResource::collection($transactions)->response();
     }
 
-    /**
-     * Registra crédito na conta autenticada.
-     */
     public function credit(StoreTransactionRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -51,9 +45,6 @@ class TransactionController extends Controller
             ->setStatusCode($result['created'] ? 201 : 200);
     }
 
-    /**
-     * Registra débito na conta autenticada.
-     */
     public function debit(StoreTransactionRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -70,9 +61,6 @@ class TransactionController extends Controller
             ->setStatusCode($result['created'] ? 201 : 200);
     }
 
-    /**
-     * Cria um estorno vinculado à movimentação original.
-     */
     public function reverse(ReverseTransactionRequest $request, int $id): JsonResponse
     {
         $transaction = $this->transactionService->reverse(

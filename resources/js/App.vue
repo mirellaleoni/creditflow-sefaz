@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
-    <!-- Barra Superior -->
     <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -14,8 +13,6 @@
             </span>
           </div>
         </div>
-
-        <!-- Se estiver logado -->
         <div v-if="token" class="flex items-center gap-3">
           <div class="text-right hidden sm:block">
             <p class="text-xs text-slate-400 font-medium leading-none">Conectado como</p>
@@ -30,13 +27,9 @@
         </div>
       </div>
     </header>
-
-    <!-- Conteúdo Principal -->
     <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
-      <!-- 1. TELA DE AUTENTICAÇÃO (Se não estiver logado) -->
       <div v-if="!token" class="max-w-md mx-auto py-8">
         <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-          <!-- Alternador Login / Cadastro -->
           <div class="flex p-1 bg-slate-950 rounded-xl border border-slate-800 mb-6">
             <button
               @click="authMode = 'login'"
@@ -60,8 +53,6 @@
           <p class="text-xs text-slate-400 mb-6">
             {{ authMode === 'login' ? 'Informe suas credenciais para gerenciar seus créditos' : 'Cada nova conta já nasce com saldo inicial de R$ 0,00' }}
           </p>
-
-          <!-- Formulário -->
           <form @submit.prevent="authMode === 'login' ? handleLogin() : handleRegister()" class="space-y-4">
             <div v-if="authMode === 'register'">
               <label class="block text-xs font-semibold text-slate-300 mb-1">Nome Completo</label>
@@ -116,8 +107,6 @@
               <span v-else>{{ authMode === 'login' ? 'Entrar' : 'Cadastrar e Abrir Conta' }}</span>
             </button>
           </form>
-
-          <!-- Atalho Usuário Demo -->
           <div class="mt-6 pt-5 border-t border-slate-800/80 text-center">
             <p class="text-xs text-slate-400 mb-2">Para testar rapidamente com dados do seeder:</p>
             <button
@@ -130,12 +119,8 @@
           </div>
         </div>
       </div>
-
-      <!-- 2. DASHBOARD FINANCEIRO (Logado) -->
       <div v-else class="space-y-8">
-        <!-- Hero: Card de Saldo e Ações Rápidas -->
         <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl">
-          <!-- Efeito de luz decorativo -->
           <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 
           <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -156,8 +141,6 @@
                 </span>
               </div>
             </div>
-
-            <!-- Botões de Ação -->
             <div class="flex flex-wrap items-center gap-3">
               <button
                 @click="openTransactionModal('credit')"
@@ -177,16 +160,12 @@
             </div>
           </div>
         </div>
-
-        <!-- Seção do Extrato -->
         <div class="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h3 class="text-lg font-bold text-white">Extrato de Movimentações</h3>
               <p class="text-xs text-slate-400">Histórico completo e auditável das suas operações</p>
             </div>
-
-            <!-- Filtro de Tipo -->
             <div class="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs">
               <button
                 v-for="filter in [
@@ -204,8 +183,6 @@
               </button>
             </div>
           </div>
-
-          <!-- Tabela -->
           <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
               <thead>
@@ -272,8 +249,6 @@
               </tbody>
             </table>
           </div>
-
-          <!-- Paginação -->
           <div v-if="pagination.last_page > 1" class="flex items-center justify-between border-t border-slate-800/80 pt-4 mt-4">
             <span class="text-xs text-slate-400">
               Página {{ pagination.current_page }} de {{ pagination.last_page }} ({{ pagination.total }} operações)
@@ -298,8 +273,6 @@
         </div>
       </div>
     </main>
-
-    <!-- MODAL DE TRANSAÇÃO (CRÉDITO OU DÉBITO) -->
     <div v-if="modal.show" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
       <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
         <div class="flex items-center justify-between mb-4">
@@ -348,8 +321,6 @@
         </form>
       </div>
     </div>
-
-    <!-- TOAST DE NOTIFICAÇÃO -->
     <div
       v-if="toast.show"
       class="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-xs font-semibold border backdrop-blur-md transition-all animate-bounce"
@@ -489,7 +460,6 @@ async function logout() {
   try {
     await api('/api/logout', { method: 'POST' });
   } catch (e) {
-    // continua logout local
   }
   token.value = '';
   currentUser.value = null;

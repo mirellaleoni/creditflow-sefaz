@@ -95,20 +95,16 @@ class AuthTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('test_token')->plainTextToken;
 
-        // Logout revoga o token
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/logout');
 
         $response->assertStatus(200)
             ->assertJson(['message' => 'Logout realizado.']);
 
-        // O token foi excluído do banco
         $this->assertDatabaseEmpty('personal_access_tokens');
 
-        // Limpa estado em memória da autenticação
         app('auth')->forgetGuards();
 
-        // Acesso seguinte com o mesmo token deve retornar 401
         $subsequent = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/user');
 

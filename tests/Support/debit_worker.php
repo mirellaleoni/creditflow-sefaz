@@ -1,13 +1,5 @@
 <?php
 
-/**
- * Processo auxiliar do ConcurrencyTest: tenta debitar uma conta em um processo PHP separado.
- *
- * Uso: php debit_worker.php <account_id> <amount_cents> <idempotency_key> <start_at_microtime>
- *
- * Imprime "STATUS:<codigo>" (201 criado, 200 repetição, 422 saldo insuficiente, ...).
- */
-
 use App\Models\Account;
 use App\Services\TransactionService;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -21,7 +13,6 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 $account = Account::findOrFail((int) $accountId);
 
-// Barreira: todos os processos esperam o mesmo instante para disputar o saldo ao mesmo tempo
 while (microtime(true) < (float) $startAt) {
     usleep(500);
 }

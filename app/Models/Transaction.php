@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Transaction extends Model
 {
     use HasFactory;
+
     protected function casts(): array
     {
         return [
@@ -32,13 +33,11 @@ class Transaction extends Model
         return $this->belongsTo(Account::class);
     }
 
-    /** Movimentação original que este estorno reverte. */
     public function reversesTransaction(): BelongsTo
     {
         return $this->belongsTo(Transaction::class, 'reverses_transaction_id');
     }
 
-    /** Estorno desta movimentação, se existir. */
     public function reversal(): HasOne
     {
         return $this->hasOne(Transaction::class, 'reverses_transaction_id');

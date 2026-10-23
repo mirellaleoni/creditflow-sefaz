@@ -6,17 +6,6 @@ use App\Models\Account;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 
-/**
- * Prova a regra R6 com processos PHP reais disputando a mesma conta.
- *
- * Só roda em PostgreSQL: o SQLite ignora SELECT ... FOR UPDATE. Exemplo (PowerShell):
- *
- *   $env:DB_CONNECTION="pgsql"; $env:DB_HOST="127.0.0.1"; $env:DB_PORT="5433"
- *   $env:DB_DATABASE="creditflow_test"; $env:DB_USERNAME="postgres"; $env:DB_PASSWORD="<senha>"
- *   php artisan test --filter=ConcurrencyTest
- *
- * Usa DatabaseMigrations (e não RefreshDatabase) porque os processos filhos só enxergam dados commitados.
- */
 class ConcurrencyTest extends TestCase
 {
     use DatabaseMigrations;
@@ -30,13 +19,9 @@ class ConcurrencyTest extends TestCase
         }
     }
 
-    /**
-     * @param  array<int, array{key: string, amount: int}>  $jobs
-     * @return array<int, string> códigos de status devolvidos por cada processo
-     */
     private function runInParallel(Account $account, array $jobs): array
     {
-        $startAt = microtime(true) + 3; // margem para todos os processos subirem
+        $startAt = microtime(true) + 3;
         $processes = [];
 
         foreach ($jobs as $i => $job) {
@@ -67,9 +52,8 @@ class ConcurrencyTest extends TestCase
 
     public function test_concurrent_debits_cannot_spend_the_same_balance(): void
     {
-        $account = Account::factory()->withBalance(10_000)->create(); // R$ 100,00
+        $account = Account::factory()->withBalance(10_000)->create();
 
-        // 5 processos tentam debitar R$ 80,00 ao mesmo tempo: só um pode vencer
         $jobs = [];
         for ($i = 1; $i <= 5; $i++) {
             $jobs[] = ['key' => "race-$i", 'amount' => 8_000];
@@ -86,9 +70,8 @@ class ConcurrencyTest extends TestCase
 
     public function test_concurrent_requests_with_same_idempotency_key_apply_effect_once(): void
     {
-        $account = Account::factory()->withBalance(100_000)->create(); // R$ 1.000,00
+        $account = Account::factory()->withBalance(100_000)->create();
 
-        // 5 processos enviam a MESMA chave e o mesmo valor simultaneamente
         $jobs = array_fill(0, 5, ['key' => 'same-key', 'amount' => 1_000]);
 
         $results = $this->runInParallel($account, $jobs);

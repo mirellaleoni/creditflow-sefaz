@@ -13,12 +13,8 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database com dados de demonstração locais.
-     */
     public function run(): void
     {
-        // 1. Usuário principal de demonstração
         $demoUser = User::firstOrCreate(
             ['email' => 'demo@creditflow.local'],
             [
@@ -29,12 +25,10 @@ class DatabaseSeeder extends Seeder
 
         $demoAccount = Account::firstOrCreate(
             ['user_id' => $demoUser->id],
-            ['balance_cents' => 57950] // R$ 579,50
+            ['balance_cents' => 57950]
         );
 
-        // Se ainda não tiver histórico, cria lançamentos de demonstração
         if ($demoAccount->transactions()->doesntExist()) {
-            // Depósito inicial de R$ 500,00
             $t1 = Transaction::create([
                 'account_id' => $demoAccount->id,
                 'type' => 'credit',
@@ -44,7 +38,6 @@ class DatabaseSeeder extends Seeder
                 'created_at' => now()->subDays(5),
             ]);
 
-            // Pagamento (débito) de R$ 120,50
             $t2 = Transaction::create([
                 'account_id' => $demoAccount->id,
                 'type' => 'debit',
@@ -54,7 +47,6 @@ class DatabaseSeeder extends Seeder
                 'created_at' => now()->subDays(4),
             ]);
 
-            // Novo crédito de R$ 200,00
             $t3 = Transaction::create([
                 'account_id' => $demoAccount->id,
                 'type' => 'credit',
@@ -64,7 +56,6 @@ class DatabaseSeeder extends Seeder
                 'created_at' => now()->subDays(3),
             ]);
 
-            // Débito de R$ 50,00 que foi estornado
             $t4 = Transaction::create([
                 'account_id' => $demoAccount->id,
                 'type' => 'debit',
@@ -74,7 +65,6 @@ class DatabaseSeeder extends Seeder
                 'created_at' => now()->subDays(2),
             ]);
 
-            // Estorno compensatório do débito acima (devolve R$ 50,00)
             Transaction::create([
                 'account_id' => $demoAccount->id,
                 'type' => 'reversal',
@@ -86,7 +76,6 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // 2. Segundo usuário para testes de isolamento local
         $secondUser = User::firstOrCreate(
             ['email' => 'outro@creditflow.local'],
             [
