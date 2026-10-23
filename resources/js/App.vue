@@ -154,9 +154,6 @@
                 <span class="text-4xl sm:text-5xl font-black text-white tracking-tight">
                   R$ {{ account?.balance || '0.00' }}
                 </span>
-                <span class="text-xs font-medium text-slate-400">
-                  ({{ (account?.balance_cents || 0).toLocaleString('pt-BR') }} centavos)
-                </span>
               </div>
             </div>
 
@@ -218,16 +215,15 @@
                   <th class="py-3 px-4">Tipo</th>
                   <th class="py-3 px-4">Valor</th>
                   <th class="py-3 px-4">Saldo Após</th>
-                  <th class="py-3 px-4">Idempotência</th>
                   <th class="py-3 px-4 text-right">Ação</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-800/60">
                 <tr v-if="loadingTransactions" class="text-slate-400 text-center">
-                  <td colspan="7" class="py-8">Carregando movimentações...</td>
+                  <td colspan="6" class="py-8">Carregando movimentações...</td>
                 </tr>
                 <tr v-else-if="transactions.length === 0" class="text-slate-400 text-center">
-                  <td colspan="7" class="py-8">Nenhuma movimentação encontrada neste período/filtro.</td>
+                  <td colspan="6" class="py-8">Nenhuma movimentação encontrada neste período/filtro.</td>
                 </tr>
                 <tr 
                   v-else 
@@ -261,9 +257,6 @@
                     {{ tx.type === 'debit' ? '-' : '+' }} R$ {{ tx.amount }}
                   </td>
                   <td class="py-3.5 px-4 text-xs font-medium text-slate-300">R$ {{ tx.balance_after }}</td>
-                  <td class="py-3.5 px-4 font-mono text-[11px] text-slate-400 max-w-[140px] truncate" :title="tx.idempotency_key">
-                    {{ tx.idempotency_key || '—' }}
-                  </td>
                   <td class="py-3.5 px-4 text-right">
                     <button
                       v-if="tx.type !== 'reversal'"
@@ -331,32 +324,8 @@
                 class="w-full pl-11 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500 font-bold transition"
               />
             </div>
-            <p class="text-[11px] text-slate-400 mt-1">
-              Será enviado como {{ Math.round((Number(modal.amount) || 0) * 100) }} centavos inteiros.
-            </p>
           </div>
 
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="text-xs font-semibold text-slate-300">Chave de Idempotência</label>
-              <button
-                type="button"
-                @click="generateNewKey"
-                class="text-[11px] text-emerald-400 hover:text-emerald-300 font-semibold cursor-pointer"
-              >
-                Gerar Nova
-              </button>
-            </div>
-            <input
-              v-model="modal.idempotencyKey"
-              type="text"
-              required
-              class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 text-xs font-mono focus:outline-none focus:border-emerald-500 transition"
-            />
-            <p class="text-[11px] text-slate-500 mt-1">
-              Repetir a mesma chave testa a idempotência sem cobrança duplicada.
-            </p>
-          </div>
 
           <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
             <button
