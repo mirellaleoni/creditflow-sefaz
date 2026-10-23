@@ -253,9 +253,8 @@ Sem corpo e sem `Idempotency-Key`. Resposta `201` com a transação do tipo `rev
 | Status | Quando |
 | --- | --- |
 | 401 | Token ausente/inválido ou credenciais incorretas |
-| 404 | Movimentação não encontrada (ou de outra conta) |
 | 409 | `Idempotency-Key` reutilizada com dados diferentes; movimentação já estornada |
-| 422 | Validação falhou, saldo insuficiente, ou tentativa de estornar um estorno |
+| 422 | Validação falhou (inclui movimentação inexistente ou de outra conta no estorno), saldo insuficiente, ou tentativa de estornar um estorno |
 | 429 | Limite de tentativas de login excedido |
 
 Erros de validação seguem o formato `{"message": "...", "errors": {"campo": ["..."]}}`.

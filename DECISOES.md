@@ -59,5 +59,5 @@ Registro das principais decisões de arquitetura do CreditFlow, com motivo e con
 **Consequências:**
 - Não há sessão nem CSRF para a API; o token deve ser guardado com cuidado pelo cliente.
 - Logout revoga somente o token usado; outros tokens do mesmo usuário continuam válidos.
-- O isolamento entre contas é garantido pelo escopo: estornar uma transação de outra conta resulta em `404` (`findOrFail` sobre as transações da conta).
+- O isolamento entre contas é garantido pelo escopo: estornar uma transação de outra conta resulta em `422`, pois a regra `exists` do [ReverseTransactionRequest](app/Http/Requests/ReverseTransactionRequest.php) filtra por `account_id`. O `findOrFail` no serviço é uma segunda barreira.
 - O limite de 5 tentativas por minuto reduz força bruta, mas pode bloquear usuários legítimos que errem a senha repetidamente.
